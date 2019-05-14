@@ -221,6 +221,28 @@ func (c *Client) CreateTask(t *TaskRequest) (*Task, error) {
 	return parseOutTaskFromData(slurp)
 }
 
+func (c *Client) AddProjectToTask(taskID string, t *TaskRequest) error {
+	qs, err := otils.ToURLValues(t)
+	if err != nil {
+		return err
+	}
+	for _, field := range readOnlyFields {
+		qs.Del(field)
+	}
+	fullURL := fmt.Sprintf("%s/tasks/%s/addProject", baseURL, taskID)
+	queryStr := qs.Encode()
+	req, err := http.NewRequest("POST", fullURL, strings.NewReader(queryStr))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	_, _, err = c.doAuthReqThenSlurpBody(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func parseOutTaskFromData(blob []byte) (*Task, error) {
 	wrap := new(taskResultWrap)
 	if err := json.Unmarshal(blob, wrap); err != nil {
